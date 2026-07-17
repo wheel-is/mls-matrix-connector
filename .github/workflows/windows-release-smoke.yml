@@ -27,11 +27,11 @@ jobs:
           $Source = [IO.File]::ReadAllText((Join-Path $PWD "install-mls-matrix.ps1"))
           [void][ScriptBlock]::Create($Source)
 
-      - name: Seed an existing Claude Desktop config
+      - name: Seed an existing Microsoft Store Claude config
         shell: powershell
         run: |
           $ErrorActionPreference = "Stop"
-          $ClaudeDirectory = Join-Path $env:APPDATA "Claude"
+          $ClaudeDirectory = Join-Path $env:LOCALAPPDATA "Packages\Claude_fixture\LocalCache\Roaming\Claude"
           $ConfigPath = Join-Path $ClaudeDirectory "claude_desktop_config.json"
           [void](New-Item -ItemType Directory -Path $ClaudeDirectory -Force)
           $Fixture = [pscustomobject][ordered]@{
@@ -46,6 +46,17 @@ jobs:
           $Json = $Fixture | ConvertTo-Json -Depth 10
           $Utf8WithoutBom = New-Object System.Text.UTF8Encoding($false)
           [IO.File]::WriteAllText($ConfigPath, "$Json`r`n", $Utf8WithoutBom)
+
+          $StandardDirectory = Join-Path $env:APPDATA "Claude"
+          $StandardConfigPath = Join-Path $StandardDirectory "claude_desktop_config.json"
+          [void](New-Item -ItemType Directory -Path $StandardDirectory -Force)
+          $StandardFixture = [pscustomobject][ordered]@{
+              mcpServers = [pscustomobject][ordered]@{
+                  StandardOnly = [pscustomobject][ordered]@{ command = "wrong-config"; args = @() }
+              }
+          }
+          $StandardJson = $StandardFixture | ConvertTo-Json -Depth 10
+          [IO.File]::WriteAllText($StandardConfigPath, "$StandardJson`r`n", $Utf8WithoutBom)
 
       - name: Run the exact installer without browser login
         shell: powershell
@@ -70,7 +81,7 @@ jobs:
               throw "The installed CLI was not found."
           }
 
-          $ConfigPath = Join-Path $env:APPDATA "Claude\claude_desktop_config.json"
+          $ConfigPath = Join-Path $env:LOCALAPPDATA "Packages\Claude_fixture\LocalCache\Roaming\Claude\claude_desktop_config.json"
           $Config = [IO.File]::ReadAllText($ConfigPath) | ConvertFrom-Json
           $Server = $Config.mcpServers.MLSListingsMatrix
           if ($null -eq $Server) {
@@ -78,6 +89,11 @@ jobs:
           }
           if ($Config.theme -ne "fixture-dark" -or $Config.mcpServers.ExistingFixture.command -ne "fixture-command") {
               throw "The installer did not preserve the existing Claude Desktop config."
+          }
+          $StandardConfigPath = Join-Path $env:APPDATA "Claude\claude_desktop_config.json"
+          $StandardConfig = [IO.File]::ReadAllText($StandardConfigPath) | ConvertFrom-Json
+          if ($null -ne $StandardConfig.mcpServers.MLSListingsMatrix) {
+              throw "The installer updated the standard config instead of the Microsoft Store config."
           }
           if (-not (Test-Path -LiteralPath $Server.command -PathType Leaf)) {
               throw "Claude Desktop config points to a missing Node executable."

@@ -112,14 +112,39 @@ function Get-NodeInstallation {
     return $Installation
 }
 
+function Get-ClaudeDesktopConfigPath {
+    $StandardConfigPath = Join-Path $env:APPDATA "Claude\claude_desktop_config.json"
+    $StoreConfigPattern = Join-Path $env:LOCALAPPDATA "Packages\*Claude*\LocalCache\Roaming\Claude\claude_desktop_config.json"
+    $StoreConfigs = @(
+        Get-ChildItem -Path $StoreConfigPattern -File -ErrorAction SilentlyContinue |
+            Sort-Object LastWriteTime -Descending
+    )
+    if ($StoreConfigs.Count -gt 0) {
+        return $StoreConfigs[0].FullName
+    }
+
+    $GetAppxPackage = Get-Command Get-AppxPackage -ErrorAction SilentlyContinue
+    if ($GetAppxPackage) {
+        $ClaudePackages = @(
+            Get-AppxPackage -Name "*Claude*" -ErrorAction SilentlyContinue |
+                Sort-Object InstallDate -Descending
+        )
+        if ($ClaudePackages.Count -gt 0) {
+            return Join-Path $env:LOCALAPPDATA ("Packages\" + $ClaudePackages[0].PackageFamilyName + "\LocalCache\Roaming\Claude\claude_desktop_config.json")
+        }
+    }
+
+    return $StandardConfigPath
+}
+
 function Merge-ClaudeDesktopConfig {
     param(
         [string]$NodePath,
         [string]$ServerPath
     )
 
-    $ClaudeDirectory = Join-Path $env:APPDATA "Claude"
-    $ConfigPath = Join-Path $ClaudeDirectory "claude_desktop_config.json"
+    $ConfigPath = Get-ClaudeDesktopConfigPath
+    $ClaudeDirectory = Split-Path -Parent $ConfigPath
     [void](New-Item -ItemType Directory -Path $ClaudeDirectory -Force)
 
     $BackupPath = ""
@@ -189,6 +214,7 @@ function Merge-ClaudeDesktopConfig {
         }
     }
 
+    Write-Host "Claude config updated at: $ConfigPath"
     return $BackupPath
 }
 
