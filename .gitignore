@@ -1,0 +1,9 @@
+*.zip
+*.har
+*.mitm
+node_modules/
+session.json
+result-state.json
+browser-profile/
+claude_desktop_config.json
+
