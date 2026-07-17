@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
-    [string]$PackageUrl = "https://github.com/wheel-is/mls-matrix-connector/releases/download/v0.1.2/mls-matrix-node-v0.1.2.zip",
-    [string]$ExpectedPackageSha256 = "D2F9B939A9F007309BD2DD21B1C26F9C828AD8AB805D60CFE248F0D9DEC4B0B1",
+    [string]$PackageUrl = "https://github.com/wheel-is/mls-matrix-connector/releases/download/v0.2.0/mls-matrix-node-v0.2.0.zip",
+    [string]$ExpectedPackageSha256 = "55EFB8D2368FCCC5C7919079D522BE0117BC9DFF1E1B8275FE53827BAFFC99FF",
     [string]$InstallRoot = (Join-Path $env:LOCALAPPDATA "MLSMatrixConnector"),
     [switch]$SkipLogin
 )
@@ -244,10 +244,10 @@ $NodeDirectory = Split-Path -Parent $NodePath
 $env:Path = "$NodeDirectory;$env:Path"
 Write-Host "Using Node.js $($NodeInstallation.Version) from $NodePath"
 
-Write-Step "Downloading MLSListings Matrix connector v0.1.2"
+Write-Step "Downloading MLSListings Matrix connector v0.2.0"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $TemporaryRoot = Join-Path $env:LOCALAPPDATA ("MLSMatrixConnector-Staging-" + [Guid]::NewGuid().ToString("N"))
-$ZipPath = Join-Path $TemporaryRoot "mls-matrix-node-v0.1.2.zip"
+$ZipPath = Join-Path $TemporaryRoot "mls-matrix-node-v0.2.0.zip"
 $ExtractPath = Join-Path $TemporaryRoot "extracted"
 [void](New-Item -ItemType Directory -Path $TemporaryRoot -Force)
 $InstallBackupPath = ""
@@ -257,7 +257,7 @@ try {
         -Uri $PackageUrl `
         -OutFile $ZipPath `
         -UseBasicParsing `
-        -Headers @{ "User-Agent" = "MLSMatrixConnectorInstaller/0.1.2" }
+        -Headers @{ "User-Agent" = "MLSMatrixConnectorInstaller/0.2.0" }
 
     $ActualHash = (Get-FileHash -LiteralPath $ZipPath -Algorithm SHA256).Hash.ToUpperInvariant()
     if ($ActualHash -ne $ExpectedPackageSha256.ToUpperInvariant()) {

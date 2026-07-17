@@ -1,6 +1,6 @@
 # MLSListings Matrix one-command installer
 
-This repository contains the Windows PowerShell bootstrap and the release workflow for `mls-matrix-node-v0.1.2.zip`.
+This repository contains the Windows PowerShell bootstrap and the release workflow for `mls-matrix-node-v0.2.0.zip`.
 
 ## Install on Windows
 

@@ -103,8 +103,8 @@ jobs:
           }
 
           $Version = @(& $Server.command $CliPath --version)
-          if ($LASTEXITCODE -ne 0 -or ($Version -join "").Trim() -ne "0.1.2") {
-              throw "The installed connector did not report version 0.1.2."
+          if ($LASTEXITCODE -ne 0 -or ($Version -join "").Trim() -ne "0.2.0") {
+              throw "The installed connector did not report version 0.2.0."
           }
           $StagingDirectories = @(Get-ChildItem -LiteralPath $env:LOCALAPPDATA -Directory -Filter "MLSMatrixConnector-Staging-*" -ErrorAction SilentlyContinue)
           if ($StagingDirectories.Count -ne 0) {
