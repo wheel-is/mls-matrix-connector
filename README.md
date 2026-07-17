@@ -7,7 +7,7 @@ This repository contains the Windows PowerShell bootstrap and the release workfl
 Fully quit Claude Desktop. Open **Windows PowerShell**, paste this entire command, and press Enter:
 
 ```powershell
-$p = Join-Path $env:TEMP 'install-mls-matrix.ps1'; [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/wheel-is/mls-matrix-connector/b3f7b1f3ac24a25b963af6a25ca574611bf00592/install-mls-matrix.ps1' -OutFile $p; if ((Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash -ne 'DCD251B546F72432BAAF7B07CB7C95BE458689EE769D8C2B5DEE11B472E22ECE') { throw 'Installer checksum verification failed.' }; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $p
+$p = Join-Path $env:TEMP 'install-mls-matrix.ps1'; [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/wheel-is/mls-matrix-connector/5d18c0064679658f09960fb4a83b9cb23b88e3fd/install-mls-matrix.ps1' -OutFile $p; if ((Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash -ne 'A007CB716DD5FA1ACAB90DBF120A1DF986603887A1ADFF61E9226C761B8DDF08') { throw 'Installer checksum verification failed.' }; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $p
 ```
 
 The installer opens the MLS website in Edge or Chrome. Enter credentials and MFA only there. If the dashboard appears, click **Matrix Search** and allow the new Matrix tab to load.
