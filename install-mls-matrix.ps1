@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$PackageUrl = "https://github.com/wheel-is/mls-matrix-connector/releases/download/v0.1.2/mls-matrix-node-v0.1.2.zip",
-    [string]$ExpectedPackageSha256 = "362256786494ECB2A750CBC37F7291A7D13041D02011B516E07DC0961065C52C",
+    [string]$ExpectedPackageSha256 = "D2F9B939A9F007309BD2DD21B1C26F9C828AD8AB805D60CFE248F0D9DEC4B0B1",
     [string]$InstallRoot = (Join-Path $env:LOCALAPPDATA "MLSMatrixConnector"),
     [switch]$SkipLogin
 )
