@@ -27,6 +27,26 @@ jobs:
           $Source = [IO.File]::ReadAllText((Join-Path $PWD "install-mls-matrix.ps1"))
           [void][ScriptBlock]::Create($Source)
 
+      - name: Seed an existing Claude Desktop config
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $ClaudeDirectory = Join-Path $env:APPDATA "Claude"
+          $ConfigPath = Join-Path $ClaudeDirectory "claude_desktop_config.json"
+          [void](New-Item -ItemType Directory -Path $ClaudeDirectory -Force)
+          $Fixture = [pscustomobject][ordered]@{
+              theme = "fixture-dark"
+              mcpServers = [pscustomobject][ordered]@{
+                  ExistingFixture = [pscustomobject][ordered]@{
+                      command = "fixture-command"
+                      args = @("--safe")
+                  }
+              }
+          }
+          $Json = $Fixture | ConvertTo-Json -Depth 10
+          $Utf8WithoutBom = New-Object System.Text.UTF8Encoding($false)
+          [IO.File]::WriteAllText($ConfigPath, "$Json`r`n", $Utf8WithoutBom)
+
       - name: Run the exact installer without browser login
         shell: powershell
         run: |
@@ -55,6 +75,9 @@ jobs:
           $Server = $Config.mcpServers.MLSListingsMatrix
           if ($null -eq $Server) {
               throw "Claude Desktop config is missing MLSListingsMatrix."
+          }
+          if ($Config.theme -ne "fixture-dark" -or $Config.mcpServers.ExistingFixture.command -ne "fixture-command") {
+              throw "The installer did not preserve the existing Claude Desktop config."
           }
           if (-not (Test-Path -LiteralPath $Server.command -PathType Leaf)) {
               throw "Claude Desktop config points to a missing Node executable."

@@ -177,7 +177,7 @@ function Merge-ClaudeDesktopConfig {
     try {
         [IO.File]::WriteAllText($TemporaryConfigPath, "$Json`r`n", $Utf8WithoutBom)
         if ($ConfigExisted) {
-            [IO.File]::Replace($TemporaryConfigPath, $ConfigPath, $null, $true)
+            [IO.File]::Replace($TemporaryConfigPath, $ConfigPath, $BackupPath, $true)
         }
         else {
             [IO.File]::Move($TemporaryConfigPath, $ConfigPath)
