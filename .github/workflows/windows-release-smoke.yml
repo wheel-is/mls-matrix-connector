@@ -1,0 +1,73 @@
+name: Windows release smoke test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out the installer
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Parse with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $Source = [IO.File]::ReadAllText((Join-Path $PWD "install-mls-matrix.ps1"))
+          [void][ScriptBlock]::Create($Source)
+
+      - name: Run the exact installer without browser login
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\install-mls-matrix.ps1 -SkipLogin
+          if ($LASTEXITCODE -ne 0) {
+              throw "Installer failed with exit code $LASTEXITCODE."
+          }
+
+      - name: Verify installation and Claude Desktop config
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          $InstallRoot = Join-Path $env:LOCALAPPDATA "MLSMatrixConnector"
+          $ServerPath = Join-Path $InstallRoot "dist\mcp-server.js"
+          $CliPath = Join-Path $InstallRoot "dist\cli.js"
+          if (-not (Test-Path -LiteralPath $ServerPath -PathType Leaf)) {
+              throw "The installed MCP server was not found."
+          }
+          if (-not (Test-Path -LiteralPath $CliPath -PathType Leaf)) {
+              throw "The installed CLI was not found."
+          }
+
+          $ConfigPath = Join-Path $env:APPDATA "Claude\claude_desktop_config.json"
+          $Config = [IO.File]::ReadAllText($ConfigPath) | ConvertFrom-Json
+          $Server = $Config.mcpServers.MLSListingsMatrix
+          if ($null -eq $Server) {
+              throw "Claude Desktop config is missing MLSListingsMatrix."
+          }
+          if (-not (Test-Path -LiteralPath $Server.command -PathType Leaf)) {
+              throw "Claude Desktop config points to a missing Node executable."
+          }
+          if ($Server.args.Count -ne 1 -or $Server.args[0] -ne $ServerPath) {
+              throw "Claude Desktop config contains the wrong MCP server path."
+          }
+
+          $Version = @(& $Server.command $CliPath --version)
+          if ($LASTEXITCODE -ne 0 -or ($Version -join "").Trim() -ne "0.1.2") {
+              throw "The installed connector did not report version 0.1.2."
+          }
+          $StagingDirectories = @(Get-ChildItem -LiteralPath $env:LOCALAPPDATA -Directory -Filter "MLSMatrixConnector-Staging-*" -ErrorAction SilentlyContinue)
+          if ($StagingDirectories.Count -ne 0) {
+              throw "The installer left a staging directory behind."
+          }

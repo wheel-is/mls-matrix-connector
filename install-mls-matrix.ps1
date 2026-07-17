@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$PackageUrl = "https://github.com/wheel-is/mls-matrix-connector/releases/download/v0.1.2/mls-matrix-node-v0.1.2.zip",
-    [string]$ExpectedPackageSha256 = "6A26B08A481F75D8C96FA6AE8ED2DB9E5C0A296B41AEF3DCEBF98BAD78401E06",
+    [string]$ExpectedPackageSha256 = "362256786494ECB2A750CBC37F7291A7D13041D02011B516E07DC0961065C52C",
     [string]$InstallRoot = (Join-Path $env:LOCALAPPDATA "MLSMatrixConnector"),
     [switch]$SkipLogin
 )
@@ -174,12 +174,19 @@ function Merge-ClaudeDesktopConfig {
     $Json = $Config | ConvertTo-Json -Depth 100
     $TemporaryConfigPath = Join-Path $ClaudeDirectory ("claude_desktop_config.json.tmp-" + [Guid]::NewGuid().ToString("N"))
     $Utf8WithoutBom = New-Object System.Text.UTF8Encoding($false)
-    [IO.File]::WriteAllText($TemporaryConfigPath, "$Json`r`n", $Utf8WithoutBom)
-    if ($ConfigExisted) {
-        [IO.File]::Replace($TemporaryConfigPath, $ConfigPath, $null, $true)
+    try {
+        [IO.File]::WriteAllText($TemporaryConfigPath, "$Json`r`n", $Utf8WithoutBom)
+        if ($ConfigExisted) {
+            [IO.File]::Replace($TemporaryConfigPath, $ConfigPath, $null, $true)
+        }
+        else {
+            [IO.File]::Move($TemporaryConfigPath, $ConfigPath)
+        }
     }
-    else {
-        [IO.File]::Move($TemporaryConfigPath, $ConfigPath)
+    finally {
+        if (Test-Path -LiteralPath $TemporaryConfigPath) {
+            Remove-Item -LiteralPath $TemporaryConfigPath -Force -ErrorAction SilentlyContinue
+        }
     }
 
     return $BackupPath
@@ -283,6 +290,9 @@ finally {
 }
 
 Write-Step "Connecting the server to Claude Desktop"
+if (Get-Process -Name "Claude*" -ErrorAction SilentlyContinue) {
+    throw "Claude Desktop was reopened during setup. Fully quit it from the system tray and rerun the installer."
+}
 $ServerPath = Join-Path $InstallRoot "dist\mcp-server.js"
 $BackupPath = Merge-ClaudeDesktopConfig -NodePath $NodePath -ServerPath $ServerPath
 if ($BackupPath) {
